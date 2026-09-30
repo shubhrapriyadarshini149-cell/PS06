@@ -1,0 +1,21 @@
+# Virtual Environments
+venv/
+env/
+.env
+
+# Output & Logs
+outputs/
+
+# Large Model Weights (Keep the directory tracked if needed, ignore the heavy files)
+models/*.pt
+models/*.onnx
+
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store

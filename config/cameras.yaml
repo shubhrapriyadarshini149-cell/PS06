@@ -1,0 +1,12 @@
+cameras:
+  - id: "cam_dock_01"
+    name: "Loading Dock North"
+    source: "tests/test_videos/cctv.mp4" 
+    zone: "loading_dock"
+    fps_limit: 15
+
+  - id: "cam_weld_02"
+    name: "Welding Cell 3"
+    source: "tests/test_videos/welding.mp4"
+    zone: "welding_bay"
+    fps_limit: 15

@@ -1,0 +1,22 @@
+confidence_thresholds:
+  person: 0.50
+  hardhat: 0.35
+  vest: 0.35
+  gloves: 0.30
+  boots: 0.35
+  fire: 0.45
+  smoke: 0.40
+
+zones:
+  welding_bay:
+    name: "Welding Bay Cell A"
+    required_ppe: ["hardhat", "vest", "gloves"]
+  loading_dock:
+    name: "Loading Dock North"
+    required_ppe: ["hardhat", "vest", "boots"]
+  general_walkway:
+    name: "Main Walkway"
+    required_ppe: ["vest"]
+  default:
+    name: "Standard Factory Floor"
+    required_ppe: ["hardhat", "vest"]

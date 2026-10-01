@@ -5,10 +5,11 @@ import cv2
 import requests
 
 class AlertManager:
-    def __init__(self, db_path="outputs/logs.db", telegram_token="", chat_id=""):
+    def __init__(self, db_path="outputs/logs.db", telegram_token="", chat_id="", webhook_url=""):
         self.db_path = db_path
         self.telegram_token = telegram_token
         self.chat_id = chat_id
+        self.webhook_url = webhook_url
         self.cooldown_cache = {} # (cam_id, track_id, type) -> timestamp
         self._init_db()
         
@@ -51,11 +52,25 @@ class AlertManager:
                          
         print(f"[{ts_str}] ALERT [{severity}]: {incident_type} in {zone} (Cam: {cam_id}). {details}")
         
+        msg = f"🚨 {severity} ALERT\nLocation: {zone} (Cam: {cam_id})\nEvent: {incident_type}\nDetails: {details}"
+        
         if self.telegram_token and self.chat_id:
-            msg = f"🚨 {severity} ALERT\nLocation: {zone}\nEvent: {incident_type}\nDetails: {details}"
             url = f"https://api.telegram.org/bot{self.telegram_token}/sendPhoto"
             try:
                 with open(snap_path, 'rb') as f:
                     requests.post(url, data={'chat_id': self.chat_id, 'caption': msg}, files={'photo': f})
             except Exception as e:
                 print(f"Failed to send Telegram alert: {e}")
+                
+        if self.webhook_url:
+            try:
+                payload = {
+                    "text": msg,
+                    "severity": severity,
+                    "zone": zone,
+                    "camera_id": cam_id,
+                    "incident_type": incident_type
+                }
+                requests.post(self.webhook_url, json=payload)
+            except Exception as e:
+                print(f"Failed to send Webhook alert: {e}")

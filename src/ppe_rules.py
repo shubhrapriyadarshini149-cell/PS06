@@ -38,13 +38,20 @@ def evaluate_compliance(detections: List[Detection], zone_rules: dict, threshold
                     associated_gear.append(g.cls)
         
         missing = [item for item in required_ppe if item not in associated_gear]
-        status = "VIOLATION" if missing else "COMPLIANT"
+        
+        ppe_status = {}
+        for item in required_ppe:
+            ppe_status[item] = "PRESENT" if item in associated_gear else "MISSING"
+            
+        status = "NC - NON-COMPLIANT" if missing else "C - COMPLIANT"
         
         results.append({
             "person": person,
             "status": status,
+            "ppe": ppe_status,
             "missing": missing,
-            "associated": associated_gear
+            "associated": associated_gear,
+            "required": required_ppe
         })
         
     return results

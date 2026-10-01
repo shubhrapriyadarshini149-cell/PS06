@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Any
 from ultralytics import YOLO
 
 # Canonical Class Normalizer
@@ -23,9 +23,14 @@ class Detection:
     track_id: int = None
 
 class SafetyDetector:
-    def __init__(self, ppe_model_path: str, fire_model_path: str):
+    def __init__(self, ppe_model_path: str, fire_model_path: str, device: str = None):
         self.ppe_model = YOLO(ppe_model_path)
         self.fire_model = YOLO(fire_model_path)
+        self.device = device
+        
+        if self.device:
+            self.ppe_model.to(self.device)
+            self.fire_model.to(self.device)
         
     def _process_results(self, results, conf_threshold=0.3) -> List[Detection]:
         detections = []
@@ -45,8 +50,8 @@ class SafetyDetector:
         return detections
 
     def predict(self, image, conf_threshold=0.3) -> List[Detection]:
-        ppe_results = self.ppe_model(image, verbose=False)
-        fire_results = self.fire_model(image, verbose=False)
+        ppe_results = self.ppe_model(image, verbose=False, device=self.device)
+        fire_results = self.fire_model(image, verbose=False, device=self.device)
         
         all_detections = []
         all_detections.extend(self._process_results(ppe_results, conf_threshold))
@@ -56,12 +61,18 @@ class SafetyDetector:
         
     def track(self, image, conf_threshold=0.3) -> List[Detection]:
         # Track PPE model to assign track_ids to persons
-        ppe_results = self.ppe_model.track(image, persist=True, tracker="bytetrack.yaml", verbose=False)
-        # Fire model doesn't need tracking IDs in the same way, normal predict is fine
-        fire_results = self.fire_model(image, verbose=False)
+        ppe_results = self.ppe_model.track(image, persist=True, tracker="bytetrack.yaml", conf=conf_threshold, verbose=False, device=self.device)
+        return self._process_results(ppe_results, conf_threshold)
+
+    def detect_fire(self, image, conf_threshold=0.3) -> List[Dict[str, Any]]:
+        fire_results = self.fire_model(image, verbose=False, device=self.device)
+        detections = self._process_results(fire_results, conf_threshold)
         
-        all_detections = []
-        all_detections.extend(self._process_results(ppe_results, conf_threshold))
-        all_detections.extend(self._process_results(fire_results, conf_threshold))
-        
-        return all_detections
+        return [
+            {
+                "cls": d.cls,
+                "conf": d.conf,
+                "bbox": list(d.bbox)
+            }
+            for d in detections if d.cls in ["fire", "smoke"]
+        ]
